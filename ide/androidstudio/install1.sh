@@ -32,7 +32,7 @@ echo -e '\e[1;37m[i] Downloading Android Studio...\e[0m'
 cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian
 mkdir -p Apps/IDE
 cd Apps/IDE
-aria2c -x 4 -o studio.tar.gz https://edgedl.me.gvt1.com/edgedl/android/studio/ide-zips/2024.2.2.14/android-studio-2024.2.2.14-linux.tar.gz
+aria2c -x 4 -o studio.tar.gz https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.2.8/android-studio-2025.2.2.8-linux.tar.gz
 clear
 echo -e '\e[1;37m[i] Installing Android Studio...\e[0m'
 tar -xvzf studio.tar.gz
@@ -43,8 +43,8 @@ cat > studio.sh <<'EOF'
 am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity && \
 termux-x11 -xstartup "bash -c 'fluxbox & thunar & /Apps/IDE/android-studio/bin/studio.sh && sleep infinity'"
 EOF
-aria2c -o startstudio.sh https://raw.githubusercontent.com/AnBui2004/termux/refs/heads/main/ide/androidstudio/startstudio.sh
-aria2c -o uninstall.sh https://raw.githubusercontent.com/AnBui2004/termux/refs/heads/main/ide/androidstudio/uninstall.sh
+aria2c -o startstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/startstudio.sh
+aria2c -o uninstall.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/uninstall.sh
 chmod +x bin/studio
 chmod +x bin/studio.sh
 chmod +x studio.sh
@@ -54,7 +54,7 @@ clear
 echo -e '\e[1;37m[i] Just a sec...\e[0m'
 mkdir -p $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom
 cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/etc/profile.d
-aria2c -o installstudio.sh https://raw.githubusercontent.com/AnBui2004/termux/refs/heads/main/ide/androidstudio/install2.sh
+aria2c -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/install2.sh
 chmod +x installstudio.sh
 cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/root
 echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > "studio.sh"
