@@ -143,6 +143,30 @@ echo "proot-distro login debian --user devroom" >> studio.sh
 echo "clear" >> studio.sh
 chmod +x studio.sh
 
+# -------------------------------
+# CREATE FORCE-KILL LAUNCHER
+# -------------------------------
+cat > "$HOME/kill" <<'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+
+pkill -9 -f termux-x11 >/dev/null 2>&1
+pkill -9 -f proot-distro >/dev/null 2>&1
+pkill -9 -f proot >/dev/null 2>&1
+pkill -9 -f debian >/dev/null 2>&1
+pkill -9 -f fluxbox >/dev/null 2>&1
+pkill -9 -f thunar >/dev/null 2>&1
+pkill -9 -f dbus-launch >/dev/null 2>&1
+pkill -9 -f studio.sh >/dev/null 2>&1
+pkill -9 -f java >/dev/null 2>&1
+pkill -9 -f adb >/dev/null 2>&1
+pkill -9 -f app_process >/dev/null 2>&1
+
+clear
+echo "All Android Studio and X11 processes have been forcefully stopped."
+EOF
+
+chmod +x "$HOME/kill"
+
 clear
 echo -e '\e[1;37m[i] Logging in...\e[0m'
 proot-distro login debian
