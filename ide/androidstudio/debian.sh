@@ -13,6 +13,7 @@ case "$opt" in
     termux-x11 -xstartup "bash -c 'fluxbox & thunar & sleep infinity'"
     ;;
 2)
+    # Executing the menu script located inside Debian root
     bash /root/studio-menu.sh
     ;;
 *)
