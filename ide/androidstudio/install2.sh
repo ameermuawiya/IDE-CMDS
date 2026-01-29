@@ -16,13 +16,6 @@ if [ -d /Apps/IDE/android-studio ]; then
     ln -sf /usr/lib/jvm/java-21-openjdk-arm64 /Apps/IDE/android-studio/jbr
 fi
 
-# Fix SDK platform-tools if needed
-if [ -d /home/devroom/Android/Sdk/platform-tools2 ]; then
-    cd /home/devroom/Android/Sdk
-    mv platform-tools2/* platform-tools/ 2>/dev/null
-    rm -rf platform-tools2
-fi
-
 # Cleanup
 rm -f /etc/profile.d/installstudio.sh
 
