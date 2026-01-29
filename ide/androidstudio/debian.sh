@@ -13,7 +13,7 @@ case "$opt" in
     termux-x11 -xstartup "bash -c 'fluxbox & thunar & sleep infinity'"
     ;;
 2)
-    bash /usr/local/bin/studio-menu.sh
+    bash /root/studio-menu.sh
     ;;
 *)
     exit 0
