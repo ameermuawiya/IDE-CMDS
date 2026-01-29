@@ -1,12 +1,42 @@
-# Android Studio on Termux (ARM64)
+# Android Studio on Termux
 
-Run Android Studio on Termux using Debian and Termux X11 (ARM64).
+Run Android Studio on Termux using Debian (proot-distro) and Termux X11.
+
+---
+
+## Required Apps
+
+- **Termux** — [Download from here](https://github.com/termux/termux-app)
+- **Termux X11** — [Download from here](https://github.com/termux/termux-x11)
+
+---
+
+<details>
+<summary><b>About the recommended Termux build</b></summary>
+
+<br>
+
+This Termux build allows full access to its files.
+
+You can view, edit, delete, and add files using file managers such as **MT Manager**.
+
+**Enable Termux access in MT Manager (SAF):**
+1. Open MT Manager  
+2. Tap ☰ → ⋮  
+3. Tap **Add local storage**  
+4. Android file picker (SAF) opens  
+5. Tap ☰ → select **Termux**  
+6. Allow access  
+
+All Termux files will now be visible and editable.
+
+</details>
 
 ---
 
 ## Installation
 
-Copy and paste this command into **Termux**:
+Run this command inside Termux:
 
 ```bash
 curl -H 'Cache-Control: no-cache' -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/install1.sh && chmod +rwx installstudio.sh && ./installstudio.sh && rm installstudio.sh && clear
@@ -14,27 +44,25 @@ curl -H 'Cache-Control: no-cache' -o installstudio.sh https://raw.githubusercont
 
 ---
 
-## Android Studio Source Menu
+<details>
+<summary><b>Android Studio source selection</b></summary>
 
-During installation, you will see a menu with three options:
+<br>
 
-1. Install default Android Studio version  
-2. Install latest Android Studio version  
-3. Install Android Studio from local storage  
+During installation, a menu is shown where you can:
 
-If you choose option **3**, enter the full file path, for example:
+- Select an Android Studio version (latest first)
+- Install from local storage
+- Skip installation if already installed
 
-```text
-/sdcard/Download/android-studio.tar.gz
-```
+If Android Studio already exists, its version is detected and shown.  
+Reinstallation is still possible.
 
-Confirm by typing `y`.
+</details>
 
 ---
 
 ## Start Android Studio
-
-After installation completes, start Android Studio with:
 
 ```bash
 ./studio.sh
@@ -42,9 +70,15 @@ After installation completes, start Android Studio with:
 
 ---
 
-## Stop Android Studio & Termux X11
+## Open Debian Only
 
-To force stop Android Studio and all related processes:
+```bash
+./debian
+```
+
+---
+
+## Stop Everything
 
 ```bash
 ./kill
@@ -52,71 +86,7 @@ To force stop Android Studio and all related processes:
 
 ---
 
-## Troubleshooting (Project & Gradle Issues)
-
-If you face any of the following problems:
-- Project window closes after clicking **Finish**
-- Gradle settings screen keeps loading forever
-- Project does not open or sync
-
-Follow the steps below.
-
----
-
-### How to run the fix commands
-
-You can run commands in **either** way:
-
-**Option 1: Debian GUI**
-- Open Debian
-- Two-finger tap → Applications → Terminal
-
-**Option 2: From Termux**
-```bash
-proot-distro login debian
-```
-
----
-
-### Step 1: Fix Java Runtime (JBR) & Gradle Loading
-
-This fixes:
-- Project closing issue
-- Gradle screen stuck on loading
-
-```bash
-ln -sf /usr/lib/jvm/java-21-openjdk-arm64 /Apps/IDE/android-studio/jbr
-```
-
----
-
-### Step 2: Fix SDK platform-tools path (if needed)
-
-```bash
-cd ~/Android/Sdk && mv platform-tools2/* platform-tools/ 2>/dev/null; rm -rf platform-tools2
-```
-
----
-
-### Final Step: Set Gradle JDK in Android Studio
-
-Open Android Studio and go to:
-
-```
-Settings > Build, Execution, Deployment > Build Tools > Gradle
-```
-
-Set **Gradle JDK** to:
-
-```text
-/usr/lib/jvm/java-21-openjdk-arm64
-```
-
-(Using `/usr/lib/jvm/` also works.)
-
----
-
 ## Credits
 
-Original scripts: **AnBui2004**  
-Improvements & updates: **Ameer Muawiya**
+Base scripts: AnBui2004  
+Automation and maintenance: Ameer Muawiya
