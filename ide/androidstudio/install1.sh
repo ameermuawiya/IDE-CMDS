@@ -34,13 +34,21 @@ echo -e '\e[1;37m[i] Installing Linux...\e[0m'
 proot-distro install debian
 
 # ----------------------------------------
-# DETECT EXISTING ANDROID STUDIO (SAFE)
+# DETECT EXISTING ANDROID STUDIO (SIMPLE)
 # ----------------------------------------
-STUDIO_INFO="$PREFIX/var/lib/proot-distro/installed-rootfs/debian/Apps/IDE/android-studio/product-info.json"
+ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/debian"
+STUDIO_DIR="$ROOTFS/Apps/IDE/android-studio"
 INSTALLED_VERSION=""
 
-if [ -f "$STUDIO_INFO" ]; then
-    INSTALLED_VERSION=$(grep -m1 '"version"' "$STUDIO_INFO" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' 2>/dev/null)
+# Try to get human-readable version (2025.3.2) from product-info.json
+if [ -f "$STUDIO_DIR/product-info.json" ]; then
+    INSTALLED_VERSION=$(grep -m1 '"dataDirectoryName"' "$STUDIO_DIR/product-info.json" \
+        | sed -E 's/.*AndroidStudio([0-9.]+).*/\1/' 2>/dev/null)
+fi
+
+# Fallback to build.txt if needed
+if [ "$INSTALLED_VERSION" = "" ] && [ -f "$STUDIO_DIR/build.txt" ]; then
+    INSTALLED_VERSION=$(cat "$STUDIO_DIR/build.txt" 2>/dev/null)
 fi
 
 # -------------------------------
@@ -106,7 +114,7 @@ if [ "$SKIP_STUDIO" = "no" ]; then
     clear
     echo -e '\e[1;37m[i] Downloading Android Studio...\e[0m'
 
-    cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian
+    cd "$ROOTFS"
     mkdir -p Apps/IDE
     cd Apps/IDE
 
@@ -116,9 +124,6 @@ if [ "$SKIP_STUDIO" = "no" ]; then
         cp "$STUDIO_SOURCE" studio.tar.gz
     fi
 
-    # -------------------------------
-    # INSTALL ANDROID STUDIO
-    # -------------------------------
     clear
     echo -e '\e[1;37m[i] Installing Android Studio...\e[0m'
     tar -xvzf studio.tar.gz
@@ -148,13 +153,13 @@ chmod +x uninstall.sh
 clear
 echo -e '\e[1;37m[i] Just a sec...\e[0m'
 
-mkdir -p $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom
+mkdir -p "$ROOTFS/home/devroom"
 
-cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/etc/profile.d
+cd "$ROOTFS/etc/profile.d"
 aria2c -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/install2.sh
 chmod +x installstudio.sh
 
-cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/root
+cd "$ROOTFS/root"
 echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > studio.sh
 echo "echo \"/Apps/IDE/android-studio/startstudio.sh\" >> /home/devroom/.profile" >> studio.sh
 echo "clear" >> studio.sh
@@ -162,13 +167,13 @@ echo "su - devroom" >> studio.sh
 echo "clear" >> studio.sh
 chmod +x studio.sh
 
-cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom
+cd "$ROOTFS/home/devroom"
 echo "/Apps/IDE/android-studio/startstudio.sh" > studio.sh
 chmod +x studio.sh
 
 cd
-echo "sed -i \"/startstudio.sh/d\" $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom/.profile" > studio.sh
-echo "echo '/Apps/IDE/android-studio/startstudio.sh' >> $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom/.profile" >> studio.sh
+echo "sed -i \"/startstudio.sh/d\" $ROOTFS/home/devroom/.profile" > studio.sh
+echo "echo '/Apps/IDE/android-studio/startstudio.sh' >> $ROOTFS/home/devroom/.profile" >> studio.sh
 echo "clear" >> studio.sh
 echo "proot-distro login debian --user devroom" >> studio.sh
 echo "clear" >> studio.sh
