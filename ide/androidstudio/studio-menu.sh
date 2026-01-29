@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ROOTFS="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/debian"
-STUDIO_DIR="$ROOTFS/Apps/IDE/android-studio"
+# Setup paths for internal Debian environment
+STUDIO_DIR="/Apps/IDE/android-studio"
 INSTALLED_VERSION=""
 
 if [ -f "$STUDIO_DIR/product-info.json" ]; then
@@ -22,7 +22,7 @@ echo "2. Otter 3 | 2025.2.3"
 echo "3. 2025.2.2.8"
 echo "4. 2024.2.2.14"
 echo "5. Install from storage"
-echo "6. Skip"
+echo "6. Skip Android Studio installation"
 read -p "Enter choice: " studio_choice
 
 STUDIO_MODE="download"
@@ -37,28 +37,66 @@ case "$studio_choice" in
     STUDIO_MODE="local"
     read -p "Enter full path: " STUDIO_SOURCE
     ;;
-6) exit 0 ;;
+6) SKIP_STUDIO="yes" ;;
 *) exit 1 ;;
 esac
 
-mkdir -p "$ROOTFS/Apps/IDE"
-cd "$ROOTFS/Apps/IDE" || exit 1
+if [ "$SKIP_STUDIO" = "no" ]; then
+    clear
+    echo -e '\e[1;37m[i] Downloading Android Studio...\e[0m'
+    
+    mkdir -p /Apps/IDE
+    cd /Apps/IDE || exit 1
 
-[ "$STUDIO_MODE" = "download" ] && aria2c -x 4 -o studio.tar.gz "$STUDIO_SOURCE" || cp "$STUDIO_SOURCE" studio.tar.gz
+    if [ "$STUDIO_MODE" = "download" ]; then
+        aria2c -q -x 4 -o studio.tar.gz "$STUDIO_SOURCE"
+    else
+        cp "$STUDIO_SOURCE" studio.tar.gz
+    fi
 
-tar -xvzf studio.tar.gz
-rm studio.tar.gz
+    clear
+    echo -e '\e[1;37m[i] Installing Android Studio...\e[0m'
+    tar -xzf studio.tar.gz
+    rm studio.tar.gz
 
-cd android-studio
-mv jbr jbr.bak
+    cd android-studio
+    mv jbr jbr.bak
+fi
 
-# launcher (unchanged)
+# -------------------------------
+# CONFIGURATION & FLOW RESTORATION
+# -------------------------------
+cd /Apps/IDE/android-studio || exit 1
+
 cat > studio.sh <<'EOF'
 am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity && \
 termux-x11 -xstartup "bash -c 'fluxbox & thunar & /Apps/IDE/android-studio/bin/studio.sh && sleep infinity'"
 EOF
 
-aria2c -o startstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/startstudio.sh
-aria2c -o uninstall.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/uninstall.sh
+# Silent download
+aria2c -q -o startstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/startstudio.sh
+aria2c -q -o uninstall.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/uninstall.sh
 
 chmod +x studio.sh startstudio.sh uninstall.sh bin/studio bin/studio.sh
+
+clear
+echo -e '\e[1;37m[i] Just a sec...\e[0m'
+
+# Restore user setup and install2.sh execution
+mkdir -p /home/devroom
+
+cd /etc/profile.d
+aria2c -q -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/install2.sh
+chmod +x installstudio.sh
+
+cd /root
+echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > studio.sh
+echo "echo \"/Apps/IDE/android-studio/startstudio.sh\" >> /home/devroom/.profile" >> studio.sh
+echo "clear" >> studio.sh
+echo "su - devroom" >> studio.sh
+echo "clear" >> studio.sh
+chmod +x studio.sh
+
+cd /home/devroom
+echo "/Apps/IDE/android-studio/startstudio.sh" > studio.sh
+chmod +x studio.sh
