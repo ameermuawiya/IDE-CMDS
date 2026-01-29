@@ -68,13 +68,6 @@ Reinstallation is still possible.
 ./studio.sh
 ```
 
----
-
-## Open Debian Only
-
-```bash
-./debian
-```
 
 ---
 
