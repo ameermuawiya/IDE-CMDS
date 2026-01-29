@@ -16,36 +16,34 @@ read -r -t 60 -n 1 _ || true
 
 clear
 echo -e '\e[1;37m[i] Installing packages...\e[0m'
-apt update
-yes y | apt upgrade -y
-apt install x11-repo -y
-apt install proot-distro aria2 termux-x11 -y
+apt update -qq >/dev/null 2>&1
+yes y | apt upgrade -y -qq >/dev/null 2>&1
+apt install x11-repo -y -qq >/dev/null 2>&1
+apt install proot-distro aria2 termux-x11 -y -qq >/dev/null 2>&1
 
 clear
 echo -e '\e[1;37m[i] Installing Linux...\e[0m'
-# Safe: do not fail if already installed
-proot-distro install debian 2>/dev/null || true
+proot-distro install debian >/dev/null 2>&1 || true
 
 # ----------------------------------------
-# PUBLIC LAUNCHER DIRECTORY (IMPORTANT)
+# SETUP SCRIPTS INSIDE DEBIAN
 # ----------------------------------------
-LAUNCHER_DIR="$HOME/.androidstudio-launchers"
+DEBIAN_ROOT="$PREFIX/var/lib/proot-distro/installed-rootfs/debian/root"
 SCRIPT_BASE="https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio"
 
-mkdir -p "$LAUNCHER_DIR"
+# Download scripts directly to Debian root
+aria2c -q -o "$DEBIAN_ROOT/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
+aria2c -q -o "$DEBIAN_ROOT/debian.sh" "$SCRIPT_BASE/debian.sh"
 
-aria2c -o "$LAUNCHER_DIR/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
-aria2c -o "$LAUNCHER_DIR/debian.sh" "$SCRIPT_BASE/debian.sh"
-
-chmod +x "$LAUNCHER_DIR/studio-menu.sh" "$LAUNCHER_DIR/debian.sh"
+chmod +x "$DEBIAN_ROOT/studio-menu.sh" "$DEBIAN_ROOT/debian.sh"
 
 # ----------------------------------------
 # Run Android Studio menu inside Debian
 # ----------------------------------------
-proot-distro login debian -- bash "$LAUNCHER_DIR/studio-menu.sh"
+proot-distro login debian -- bash /root/studio-menu.sh
 
 # ----------------------------------------
-# Force-kill launcher (unchanged)
+# FORCE-KILL LAUNCHER
 # ----------------------------------------
 cat > "$HOME/kill" <<'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
