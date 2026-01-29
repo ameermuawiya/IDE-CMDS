@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Setup paths for internal Debian environment
+ROOTFS="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/debian"
 STUDIO_DIR="/Apps/IDE/android-studio"
 INSTALLED_VERSION=""
 
+# Check version inside Debian path
 if [ -f "$STUDIO_DIR/product-info.json" ]; then
     INSTALLED_VERSION=$(grep -m1 '"dataDirectoryName"' "$STUDIO_DIR/product-info.json" \
         | sed -E 's/.*AndroidStudio([0-9.]+).*/\1/')
@@ -64,7 +65,7 @@ if [ "$SKIP_STUDIO" = "no" ]; then
 fi
 
 # -------------------------------
-# CONFIGURATION & FLOW RESTORATION
+# CONFIGURATION & NEXT STEP FLOW
 # -------------------------------
 cd /Apps/IDE/android-studio || exit 1
 
@@ -73,7 +74,7 @@ am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity && \
 termux-x11 -xstartup "bash -c 'fluxbox & thunar & /Apps/IDE/android-studio/bin/studio.sh && sleep infinity'"
 EOF
 
-# Silent download
+# Silent download for helper scripts
 aria2c -q -o startstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/startstudio.sh
 aria2c -q -o uninstall.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/uninstall.sh
 
@@ -82,13 +83,15 @@ chmod +x studio.sh startstudio.sh uninstall.sh bin/studio bin/studio.sh
 clear
 echo -e '\e[1;37m[i] Just a sec...\e[0m'
 
-# Restore user setup and install2.sh execution
-mkdir -p /home/devroom
-
+# Proceed to run install2 logic automatically inside Debian
 cd /etc/profile.d
 aria2c -q -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio/install2.sh
 chmod +x installstudio.sh
 
+# Execute install2 immediately to maintain original flow
+bash installstudio.sh
+
+# Setup User Profile logic (Restored from original)
 cd /root
 echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > studio.sh
 echo "echo \"/Apps/IDE/android-studio/startstudio.sh\" >> /home/devroom/.profile" >> studio.sh
@@ -99,4 +102,12 @@ chmod +x studio.sh
 
 cd /home/devroom
 echo "/Apps/IDE/android-studio/startstudio.sh" > studio.sh
+chmod +x studio.sh
+
+cd
+echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > studio.sh
+echo "echo '/Apps/IDE/android-studio/startstudio.sh' >> /home/devroom/.profile" >> studio.sh
+echo "clear" >> studio.sh
+echo "su - devroom" >> studio.sh
+echo "clear" >> studio.sh
 chmod +x studio.sh
