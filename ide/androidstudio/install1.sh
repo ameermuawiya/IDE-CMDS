@@ -33,26 +33,49 @@ clear
 echo -e '\e[1;37m[i] Installing Linux...\e[0m'
 proot-distro install debian
 
+# ----------------------------------------
+# DETECT EXISTING ANDROID STUDIO (SAFE)
+# ----------------------------------------
+STUDIO_INFO="$PREFIX/var/lib/proot-distro/installed-rootfs/debian/Apps/IDE/android-studio/product-info.json"
+INSTALLED_VERSION=""
+
+if [ -f "$STUDIO_INFO" ]; then
+    INSTALLED_VERSION=$(grep -m1 '"version"' "$STUDIO_INFO" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' 2>/dev/null)
+fi
+
 # -------------------------------
 # ANDROID STUDIO SOURCE SELECTION
 # -------------------------------
 clear
 echo -e "\e[1;37mSelect Android Studio source:\e[0m"
 echo -e "\e[1;37m-----------------------------\e[0m"
-echo -e "\e[1;37m1. Install Android Studio 2024.2.2.14 (default)\e[0m"
-echo -e "\e[1;37m2. Install Android Studio 2025.2.2.8 (latest)\e[0m"
-echo -e "\e[1;37m3. Install Android Studio from storage\e[0m"
+if [ "$INSTALLED_VERSION" != "" ]; then
+    echo -e "\e[1;32mDetected installed version: $INSTALLED_VERSION\e[0m"
+    echo -e "\e[1;37m-----------------------------\e[0m"
+fi
+
+echo -e "\e[1;37m1. Android Studio Panda 1 | 2025.3.1 RC1\e[0m"
+echo -e "\e[1;37m2. Android Studio Otter 3 | 2025.2.3\e[0m"
+echo -e "\e[1;37m3. Android Studio 2025.2.2.8\e[0m"
+echo -e "\e[1;37m4. Android Studio 2024.2.2.14\e[0m"
+echo -e "\e[1;37m5. Install Android Studio from storage\e[0m"
+echo -e "\e[1;37m6. Skip Android Studio installation (already installed)\e[0m"
 echo -e "\e[1;37m-----------------------------\e[0m"
-read -p "Enter choice [1-3]: " studio_choice
+read -p "Enter choice [1-6]: " studio_choice
 
 STUDIO_SOURCE=""
 STUDIO_MODE="download"
+SKIP_STUDIO="no"
 
 if [ "$studio_choice" = "1" ]; then
-    STUDIO_SOURCE="https://edgedl.me.gvt1.com/edgedl/android/studio/ide-zips/2024.2.2.14/android-studio-2024.2.2.14-linux.tar.gz"
+    STUDIO_SOURCE="https://edgedl.me.gvt1.com/android/studio/ide-zips/2025.3.1.6/android-studio-panda1-rc1-linux.tar.gz"
 elif [ "$studio_choice" = "2" ]; then
-    STUDIO_SOURCE="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2025.2.2.8/android-studio-2025.2.2.8-linux.tar.gz"
+    STUDIO_SOURCE="https://edgedl.me.gvt1.com/android/studio/ide-zips/2025.2.3.9/android-studio-2025.2.3.9-linux.tar.gz"
 elif [ "$studio_choice" = "3" ]; then
+    STUDIO_SOURCE="https://redirector.gvt1.com/android/studio/ide-zips/2025.2.2.8/android-studio-2025.2.2.8-linux.tar.gz"
+elif [ "$studio_choice" = "4" ]; then
+    STUDIO_SOURCE="https://edgedl.me.gvt1.com/android/studio/ide-zips/2024.2.2.14/android-studio-2024.2.2.14-linux.tar.gz"
+elif [ "$studio_choice" = "5" ]; then
     STUDIO_MODE="local"
     while true; do
         read -p "Enter full path to android-studio-*.tar.gz: " LOCAL_STUDIO
@@ -68,6 +91,9 @@ elif [ "$studio_choice" = "3" ]; then
             echo "File not found. Try again."
         fi
     done
+elif [ "$studio_choice" = "6" ]; then
+    read -p "Confirm skip Android Studio installation? (y/n): " skip_confirm
+    [ "$skip_confirm" = "y" ] && SKIP_STUDIO="yes"
 else
     echo "Invalid option. Exiting."
     exit 1
@@ -76,30 +102,35 @@ fi
 # -------------------------------
 # DOWNLOAD / COPY ANDROID STUDIO
 # -------------------------------
-clear
-echo -e '\e[1;37m[i] Downloading Android Studio...\e[0m'
+if [ "$SKIP_STUDIO" = "no" ]; then
+    clear
+    echo -e '\e[1;37m[i] Downloading Android Studio...\e[0m'
 
-cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian
-mkdir -p Apps/IDE
-cd Apps/IDE
+    cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian
+    mkdir -p Apps/IDE
+    cd Apps/IDE
 
-if [ "$STUDIO_MODE" = "download" ]; then
-    aria2c -x 4 -o studio.tar.gz "$STUDIO_SOURCE"
-else
-    cp "$STUDIO_SOURCE" studio.tar.gz
+    if [ "$STUDIO_MODE" = "download" ]; then
+        aria2c -x 4 -o studio.tar.gz "$STUDIO_SOURCE"
+    else
+        cp "$STUDIO_SOURCE" studio.tar.gz
+    fi
+
+    # -------------------------------
+    # INSTALL ANDROID STUDIO
+    # -------------------------------
+    clear
+    echo -e '\e[1;37m[i] Installing Android Studio...\e[0m'
+    tar -xvzf studio.tar.gz
+    rm studio.tar.gz
+
+    cd android-studio
+    mv jbr jbr.bak
 fi
 
 # -------------------------------
-# INSTALL ANDROID STUDIO
+# ORIGINAL LAUNCHER CREATION
 # -------------------------------
-clear
-echo -e '\e[1;37m[i] Installing Android Studio...\e[0m'
-tar -xvzf studio.tar.gz
-rm studio.tar.gz
-
-cd android-studio
-mv jbr jbr.bak
-
 cat > studio.sh <<'EOF'
 am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity && \
 termux-x11 -xstartup "bash -c 'fluxbox & thunar & /Apps/IDE/android-studio/bin/studio.sh && sleep infinity'"
@@ -124,7 +155,7 @@ aria2c -o installstudio.sh https://raw.githubusercontent.com/ameermuawiya/IDE-CM
 chmod +x installstudio.sh
 
 cd $PREFIX/var/lib/proot-distro/installed-rootfs/debian/root
-echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > "studio.sh"
+echo "sed -i \"/startstudio.sh/d\" /home/devroom/.profile" > studio.sh
 echo "echo \"/Apps/IDE/android-studio/startstudio.sh\" >> /home/devroom/.profile" >> studio.sh
 echo "clear" >> studio.sh
 echo "su - devroom" >> studio.sh
@@ -136,7 +167,7 @@ echo "/Apps/IDE/android-studio/startstudio.sh" > studio.sh
 chmod +x studio.sh
 
 cd
-echo "sed -i \"/startstudio.sh/d\" $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom/.profile" > "studio.sh"
+echo "sed -i \"/startstudio.sh/d\" $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom/.profile" > studio.sh
 echo "echo '/Apps/IDE/android-studio/startstudio.sh' >> $PREFIX/var/lib/proot-distro/installed-rootfs/debian/home/devroom/.profile" >> studio.sh
 echo "clear" >> studio.sh
 echo "proot-distro login debian --user devroom" >> studio.sh
