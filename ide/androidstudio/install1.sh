@@ -16,30 +16,44 @@ read -r -t 60 -n 1 _ || true
 
 clear
 echo -e '\e[1;37m[i] Installing packages...\e[0m'
-apt update -qq >/dev/null 2>&1
-yes y | apt upgrade -y -qq >/dev/null 2>&1
-apt install x11-repo -y -qq >/dev/null 2>&1
-apt install proot-distro aria2 termux-x11 -y -qq >/dev/null 2>&1
+apt update
+yes y | apt upgrade -y
+apt install x11-repo -y
+apt install proot-distro aria2 termux-x11 -y
 
 clear
 echo -e '\e[1;37m[i] Installing Linux...\e[0m'
-proot-distro install debian >/dev/null 2>&1 || true
+proot-distro install debian 2>/dev/null || true
 
 # ----------------------------------------
-# SETUP SCRIPTS INSIDE DEBIAN
+# SETUP SCRIPTS IN TERMUX HIDDEN FOLDER
 # ----------------------------------------
-DEBIAN_ROOT="$PREFIX/var/lib/proot-distro/installed-rootfs/debian/root"
+SCRIPT_DIR="$HOME/.scripts"
+mkdir -p "$SCRIPT_DIR"
+
 SCRIPT_BASE="https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio"
 
-# Download scripts directly to Debian root
-aria2c -q -o "$DEBIAN_ROOT/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
-aria2c -q -o "$DEBIAN_ROOT/debian.sh" "$SCRIPT_BASE/debian.sh"
+# Download scripts to Termux storage (Silent)
+aria2c -q -o "$SCRIPT_DIR/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
+aria2c -q -o "$SCRIPT_DIR/debian.sh" "$SCRIPT_BASE/debian.sh"
 
-chmod +x "$DEBIAN_ROOT/studio-menu.sh" "$DEBIAN_ROOT/debian.sh"
+chmod +x "$SCRIPT_DIR/studio-menu.sh" "$SCRIPT_DIR/debian.sh"
 
 # ----------------------------------------
-# Run Android Studio menu inside Debian
+# COPY SCRIPTS TO DEBIAN INTERNAL STORAGE
 # ----------------------------------------
+DEBIAN_ROOT_FS="$PREFIX/var/lib/proot-distro/installed-rootfs/debian/root"
+
+# Copying files ensuring they exist inside Debian for execution
+cp "$SCRIPT_DIR/studio-menu.sh" "$DEBIAN_ROOT_FS/studio-menu.sh"
+cp "$SCRIPT_DIR/debian.sh" "$DEBIAN_ROOT_FS/debian.sh"
+
+chmod +x "$DEBIAN_ROOT_FS/studio-menu.sh" "$DEBIAN_ROOT_FS/debian.sh"
+
+# ----------------------------------------
+# Run Android Studio menu inside Debian automatically
+# ----------------------------------------
+# This line restores the flow by executing the menu inside Debian immediately
 proot-distro login debian -- bash /root/studio-menu.sh
 
 # ----------------------------------------
