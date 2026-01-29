@@ -1,6 +1,6 @@
 clear
 
-getpermisionsdcard=$(ls -l /sdcard/)
+getpermisionsdcard=$(ls -l /sdcard/ 2>/dev/null)
 if [ "$getpermisionsdcard" == "" ]; then
     echo -e "\e[1;37m[!] You should grant access to storage on this device."
     yes y | termux-setup-storage
@@ -23,27 +23,33 @@ apt install proot-distro aria2 termux-x11 -y
 
 clear
 echo -e '\e[1;37m[i] Installing Linux...\e[0m'
-proot-distro install debian
+# Safe: do not fail if already installed
+proot-distro install debian 2>/dev/null || true
 
-ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/debian"
+# ----------------------------------------
+# PUBLIC LAUNCHER DIRECTORY (IMPORTANT)
+# ----------------------------------------
+LAUNCHER_DIR="$HOME/.androidstudio-launchers"
 SCRIPT_BASE="https://raw.githubusercontent.com/ameermuawiya/IDE-CMDS/main/ide/androidstudio"
 
-# download helper scripts
-mkdir -p "$ROOTFS/usr/local/bin"
-aria2c -o "$ROOTFS/usr/local/bin/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
-aria2c -o "$ROOTFS/usr/local/bin/debian.sh" "$SCRIPT_BASE/debian.sh"
+mkdir -p "$LAUNCHER_DIR"
 
-chmod +x "$ROOTFS/usr/local/bin/"*.sh
+aria2c -o "$LAUNCHER_DIR/studio-menu.sh" "$SCRIPT_BASE/studio-menu.sh"
+aria2c -o "$LAUNCHER_DIR/debian.sh" "$SCRIPT_BASE/debian.sh"
 
-# call Android Studio install menu INSIDE Debian
-proot-distro login debian -- bash /usr/local/bin/studio-menu.sh
+chmod +x "$LAUNCHER_DIR/studio-menu.sh" "$LAUNCHER_DIR/debian.sh"
 
-# continue normal flow
-proot-distro login debian
+# ----------------------------------------
+# Run Android Studio menu inside Debian
+# ----------------------------------------
+proot-distro login debian -- bash "$LAUNCHER_DIR/studio-menu.sh"
 
-# kill launcher (unchanged)
+# ----------------------------------------
+# Force-kill launcher (unchanged)
+# ----------------------------------------
 cat > "$HOME/kill" <<'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
+
 pkill -9 -f termux-x11 >/dev/null 2>&1
 pkill -9 -f proot-distro >/dev/null 2>&1
 pkill -9 -f proot >/dev/null 2>&1
@@ -55,8 +61,13 @@ pkill -9 -f studio.sh >/dev/null 2>&1
 pkill -9 -f java >/dev/null 2>&1
 pkill -9 -f adb >/dev/null 2>&1
 pkill -9 -f app_process >/dev/null 2>&1
+
 clear
 echo "All Android Studio and X11 processes have been forcefully stopped."
 EOF
 
 chmod +x "$HOME/kill"
+
+clear
+echo -e '\e[1;37m[i] Logging in...\e[0m'
+proot-distro login debian
