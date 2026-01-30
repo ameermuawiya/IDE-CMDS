@@ -4,6 +4,8 @@ apt update
 apt upgrade -y
 
 apt install sudo xterm thunar fluxbox default-jdk android-tools-adb aapt git -y
+# Required native libraries for Android Studio internal UI panels (Gradle Assistant, Project Structure, Tool Windows)
+apt install -y libjna-java libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2
 
 useradd -m devroom
 passwd -d devroom
